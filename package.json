@@ -1,0 +1,39 @@
+{
+  "name": "spacetime-data-mapwarper",
+  "version": "0.0.1",
+  "description": "Download and convert Mapwarper data to Histograph NDJSON",
+  "main": "oldnyc.js",
+  "devDependencies": {
+    "jscs": "^1.10.0",
+    "jshint": "^2.6.0",
+    "tape": "^3.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/nypl-spacetime/data-mapwarper.git"
+  },
+  "scripts": {
+    "test": "jshint *.js && jscs *.js"
+  },
+  "author": "Bert Spaan",
+  "license": "MIT",
+  "dependencies": {
+    "JSONStream": "^1.0.7",
+    "highland": "^2.6.0",
+    "request": "^2.67.0",
+    "wellknown": "^0.4.0"
+  },
+  "jshintConfig": {
+    "node": true,
+    "globalstrict": false,
+    "undef": true,
+    "unused": true,
+    "noarg": true
+  },
+  "jscsConfig": {
+    "preset": "airbnb",
+    "requireCamelCaseOrUpperCaseIdentifiers": null,
+    "disallowMultipleVarDecl": true,
+    "requireMultipleVarDecl": null
+  }
+}
