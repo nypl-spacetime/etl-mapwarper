@@ -5,5 +5,30 @@
   "description": "",
   "author": "NYPL",
   "website": "http://maps.nypl.org/",
-  "editor": "Bert Spaan"
+  "editor": "Bert Spaan",
+  "@context": {
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "description": {
+      "@id": "dc:description",
+      "@type": "xsd:string"
+    },
+    "nyplDigitalId": {
+      "@id": "dcterms:identifier",
+      "@type": "xsd:string"
+    },
+    "uuid": {
+      "@id": "dcterms:identifier",
+      "@type": "xsd:string"
+    },
+    "parentUuid": {
+      "@id": "dcterms:identifier",
+      "@type": "xsd:string"
+    },
+    "nyplUrl": {
+      "@id": "dcterms:identifier",
+      "@type": "xsd:string"
+    }
+  }
 }
