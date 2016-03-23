@@ -29,6 +29,12 @@
     "nyplUrl": {
       "@id": "dcterms:identifier",
       "@type": "xsd:string"
+    },
+    "masked": {
+      "@type": "xsd:boolean"
+    },
+    "area": {
+      "@type": "xsd:integer"
     }
   }
 }

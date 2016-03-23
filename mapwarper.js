@@ -4,6 +4,10 @@ var request = require('request')
 var H = require('highland')
 var JSONStream = require('JSONStream')
 var wellknown = require('wellknown')
+var turf = {
+  area: require('turf-area')
+}
+var maskToGeoJSON = require('mask-to-geojson')
 
 var getUrl = function (perPage, page) {
   return `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
@@ -56,7 +60,35 @@ var writePit = function (writer, pit, callback) {
   writer.writeObjects(data, callback)
 }
 
-function download (config, dir, writer, callback) {
+function getMask(sleep, map, callback) {
+  var maskStatus = map.mask_status
+  if (maskStatus === 'masked' || maskStatus === 'masking') {
+    console.log(`          Getting mask for map ${map.id}`)
+    maskToGeoJSON.getMaskAndTransform({
+      mapId: map.id
+    }, (err, geojson) => {
+      if (err) {
+        console.error(err)
+      } else {
+        console.log(`          Transformed mask for map ${map.id}: ${geojson.coordinates[0].length} points`)
+        map.mask = geojson
+      }
+
+      if (sleep) {
+        setTimeout(() => {
+          callback(null, map)
+        }, sleep)
+      } else {
+        callback(null, map)
+      }
+
+    })
+  } else {
+    callback(null, map)
+  }
+}
+
+function download (config, dirs, tools, callback) {
   const sleepMs = 2000
   const perPage = 250
 
@@ -70,35 +102,55 @@ function download (config, dir, writer, callback) {
     .map((body) => body.items)
     .flatten()
     .compact()
+    .map(H.curry(getMask, sleepMs / 20))
+    .nfcall([])
+    .series()
     .errors(callback)
     .pipe(JSONStream.stringify())
     .on('end', callback)
-    .pipe(fs.createWriteStream(path.join(dir, 'maps.json')))
+    .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.json')))
 }
 
-function convert (config, dir, writer, callback) {
-  var stream = fs.createReadStream(path.join(dir, 'maps.json'))
+function convert (config, dirs, tools, callback) {
+  var stream = fs.createReadStream(path.join(dirs.previous, 'maps.json'))
     .pipe(JSONStream.parse('*'))
 
   H(stream)
-    .filter((map) => map.bbox_geom)
-    .map((d) => ({
-      id: d.id,
-      type: 'st:Map',
-      name: d.title,
-      data: {
-        description: d.description,
-        nyplDigitalId: d.nypl_digital_id,
-        uuid: d.uuid,
-        parentUuid: d.parent_uuid,
-        nyplUrl: 'http://digitalcollections.nypl.org/items/' + d.uuid
-      },
-      geometry: wellknown(d.bbox_geom),
-      validSince: d.issue_year,
-      validUntil: d.issue_year
-    }))
+    .filter((map) => map.bbox)
+    .map((map) => {
+      var pit = {
+        id: map.id,
+        type: 'st:Map',
+        name: map.title,
+        data: {
+          description: map.description,
+          nyplDigitalId: map.nypl_digital_id,
+          uuid: map.uuid,
+          parentUuid: map.parent_uuid,
+          masked: map.mask_status === 'masked' || map.mask_status === 'masking',
+          nyplUrl: 'http://digitalcollections.nypl.org/items/' + map.uuid
+        }
+      }
+
+      if (map.mask && map.mask.coordinates[0].length >= 4) {
+        pit.geometry = map.mask
+
+        // Compute map area in square meters
+        var area = Math.round(turf.area(map.mask))
+        pit.data.area = area
+      } else if (map.bbox_geom) {
+        pit.geometry = wellknown(map.bbox_geom)
+      }
+
+      if (map.depicts_year || map.issue_year) {
+        pit.validSince = map.depicts_year || map.issue_year
+        pit.validUntil = map.depicts_year || map.issue_year
+      }
+
+      return pit
+    })
     .flatten()
-    .map(H.curry(writePit, writer))
+    .map(H.curry(writePit, tools.writer))
     .nfcall([])
     .series()
     .errors(console.error)

@@ -18,7 +18,9 @@
   "dependencies": {
     "JSONStream": "^1.0.7",
     "highland": "^2.6.0",
+    "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson",
     "request": "^2.67.0",
+    "turf-area": "^1.1.1",
     "wellknown": "^0.4.0"
   }
 }
