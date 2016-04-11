@@ -5,9 +5,13 @@ var H = require('highland')
 var JSONStream = require('JSONStream')
 var wellknown = require('wellknown')
 var turf = {
-  area: require('turf-area')
+  area: require('turf-area'),
+  buffer: require('turf-buffer'),
+  intersect: require('turf-intersect')
 }
 var maskToGeoJSON = require('mask-to-geojson')
+
+const wholeWorld = require('./whole-world.json')
 
 var getUrl = function (perPage, page) {
   return `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
@@ -49,18 +53,7 @@ var getUrls = function (perPage, items) {
   return urls
 }
 
-var writePit = function (writer, pit, callback) {
-  var data = [
-    {
-      type: 'pit',
-      obj: pit
-    }
-  ]
-
-  writer.writeObjects(data, callback)
-}
-
-function getMask(sleep, map, callback) {
+function getMask (sleep, map, callback) {
   var maskStatus = map.mask_status
   if (maskStatus === 'masked' || maskStatus === 'masking') {
     console.log(`          Getting mask for map ${map.id}`)
@@ -69,6 +62,7 @@ function getMask(sleep, map, callback) {
     }, (err, geojson) => {
       if (err) {
         console.error(err)
+        map.maskError = err.message
       } else {
         console.log(`          Transformed mask for map ${map.id}: ${geojson.coordinates[0].length} points`)
         map.mask = geojson
@@ -81,7 +75,6 @@ function getMask(sleep, map, callback) {
       } else {
         callback(null, map)
       }
-
     })
   } else {
     callback(null, map)
@@ -111,7 +104,56 @@ function download (config, dirs, tools, callback) {
     .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.json')))
 }
 
-function convert (config, dirs, tools, callback) {
+function getLogs (map) {
+  var log = {
+    id: map.id,
+    nyplDigitalId: map.nypl_digital_id,
+    errors: []
+  }
+
+  var mapStatus = map.status
+  var maskStatus = map.mask_status
+
+  if (map.mask && map.mask.coordinates[0].length < 5) {
+    log.errors.push({
+      error: 'mask_coordinates_count',
+      message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least 5)`
+    })
+  }
+  // TODO: kijk of coordinaten tussen de 90 en 180 zijn etc.!
+
+  if (map.maskError) {
+    log.errors.push({
+      error: 'mask_to_geojson',
+      message: map.maskError
+    })
+  }
+
+  if (mapStatus === 'warped' && maskStatus === 'unmasked') {
+    log.errors.push({
+      error: 'mask_missing',
+      message: 'Map is warped, but not masked'
+    })
+  }
+
+  if (mapStatus !== 'warped' && mapStatus !== 'published' && maskStatus !== 'unmasked') {
+    log.errors.push({
+      error: 'unwarped_but_masked',
+      message: 'Map is masked, but not warped'
+    })
+  }
+
+  if (log.errors.length) {
+    return {
+      type: 'log',
+      obj: log
+    }
+  } else {
+    return null
+  }
+}
+
+function transform (config, dirs, tools, callback) {
   var stream = fs.createReadStream(path.join(dirs.previous, 'maps.json'))
     .pipe(JSONStream.parse('*'))
 
@@ -132,14 +174,39 @@ function convert (config, dirs, tools, callback) {
         }
       }
 
+      var geometry
       if (map.mask && map.mask.coordinates[0].length >= 4) {
-        pit.geometry = map.mask
-
-        // Compute map area in square meters
-        var area = Math.round(turf.area(map.mask))
-        pit.data.area = area
+        geometry = map.mask
       } else if (map.bbox_geom) {
-        pit.geometry = wellknown(map.bbox_geom)
+        geometry = wellknown(map.bbox_geom)
+      }
+
+      if (geometry) {
+        var intersection
+
+        var buffered = turf.buffer(
+          {
+            type: 'Feature',
+            geometry: geometry
+          }
+          , 0.01, 'meters'
+        )
+
+        try {
+          intersection = turf.intersect(wholeWorld, buffered)
+        } catch (err) {
+          console.error(pit.id, err)
+          console.log(JSON.stringify(geometry))
+          intersection = undefined
+        }
+
+        if (intersection) {
+          pit.geometry = intersection.geometry
+
+          // Compute map area in square kilometers
+          var area = Math.round(turf.area(intersection.geometry))
+          pit.data.area = area * 0.000001
+        }
       }
 
       if (map.depicts_year || map.issue_year) {
@@ -147,13 +214,22 @@ function convert (config, dirs, tools, callback) {
         pit.validUntil = map.depicts_year || map.issue_year
       }
 
-      return pit
+      var logs = getLogs(map)
+
+      return [
+        logs,
+        {
+          type: 'pit',
+          obj: pit
+        }
+      ]
     })
     .flatten()
-    .map(H.curry(writePit, tools.writer))
+    .compact()
+    .map(H.curry(tools.writer.writeObject))
     .nfcall([])
     .series()
-    .errors(console.error)
+    .errors(callback)
     .done(callback)
 }
 
@@ -161,5 +237,5 @@ function convert (config, dirs, tools, callback) {
 
 module.exports.steps = [
   download,
-  convert
+  transform
 ]

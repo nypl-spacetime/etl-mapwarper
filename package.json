@@ -1,5 +1,5 @@
 {
-  "name": "spacetime-data-mapwarper",
+  "name": "spacetime-etl-mapwarper",
   "version": "0.0.1",
   "description": "Download and convert Mapwarper data to Histograph NDJSON",
   "main": "mapwarper.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/nypl-spacetime/data-mapwarper.git"
+    "url": "http://github.com/nypl-spacetime/etl-mapwarper.git"
   },
   "scripts": {
     "test": "standard"
@@ -21,6 +21,8 @@
     "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson",
     "request": "^2.67.0",
     "turf-area": "^1.1.1",
+    "turf-buffer": "^1.1.0",
+    "turf-intersect": "^1.4.2",
     "wellknown": "^0.4.0"
   }
 }

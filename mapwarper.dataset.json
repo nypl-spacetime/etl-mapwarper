@@ -34,7 +34,7 @@
       "@type": "xsd:boolean"
     },
     "area": {
-      "@type": "xsd:integer"
+      "@type": "xsd:double"
     }
   }
 }
