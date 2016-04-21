@@ -108,42 +108,42 @@ function getLogs (map) {
   var log = {
     id: map.id,
     nyplDigitalId: map.nypl_digital_id,
-    errors: []
+    logs: []
   }
 
   var mapStatus = map.status
   var maskStatus = map.mask_status
 
   if (map.mask && map.mask.coordinates[0].length < 5) {
-    log.errors.push({
-      error: 'mask_coordinates_count',
+    log.logs.push({
+      type: 'mask_coordinates_count',
       message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least 5)`
     })
   }
   // TODO: kijk of coordinaten tussen de 90 en 180 zijn etc.!
 
   if (map.maskError) {
-    log.errors.push({
-      error: 'mask_to_geojson',
+    log.logs.push({
+      type: 'mask_to_geojson',
       message: map.maskError
     })
   }
 
   if (mapStatus === 'warped' && maskStatus === 'unmasked') {
-    log.errors.push({
-      error: 'mask_missing',
+    log.logs.push({
+      type: 'mask_missing',
       message: 'Map is warped, but not masked'
     })
   }
 
   if (mapStatus !== 'warped' && mapStatus !== 'published' && maskStatus !== 'unmasked') {
-    log.errors.push({
-      error: 'unwarped_but_masked',
+    log.logs.push({
+      type: 'unwarped_but_masked',
       message: 'Map is masked, but not warped'
     })
   }
 
-  if (log.errors.length) {
+  if (log.logs.length) {
     return {
       type: 'log',
       obj: log
