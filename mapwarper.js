@@ -114,10 +114,11 @@ function getLogs (map) {
   var mapStatus = map.status
   var maskStatus = map.mask_status
 
-  if (map.mask && map.mask.coordinates[0].length < 5) {
+  var minCoordinatesCount = 4
+  if (map.mask && map.mask.coordinates[0].length < minCoordinatesCount) {
     log.logs.push({
       type: 'mask_coordinates_count',
-      message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least 5)`
+      message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least ${minCoordinatesCount})`
     })
   }
   // TODO: kijk of coordinaten tussen de 90 en 180 zijn etc.!
