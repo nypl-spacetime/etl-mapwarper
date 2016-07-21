@@ -7,6 +7,7 @@ var wellknown = require('wellknown')
 var turf = {
   area: require('turf-area'),
   buffer: require('turf-buffer'),
+  envelope: require('turf-envelope'),
   intersect: require('turf-intersect')
 }
 var maskToGeoJSON = require('mask-to-geojson')
@@ -58,10 +59,11 @@ function getMask (sleep, map, callback) {
   if (maskStatus === 'masked' || maskStatus === 'masking') {
     console.log(`          Getting mask for map ${map.id}`)
     maskToGeoJSON.getMaskAndTransform({
-      mapId: map.id
+      mapId: map.id,
+      transform: map.transform_options
     }, (err, geojson) => {
       if (err) {
-        console.error(err)
+        console.error(err.message)
         map.maskError = err.message
       } else {
         console.log(`          Transformed mask for map ${map.id}: ${geojson.coordinates[0].length} points`)
@@ -121,7 +123,16 @@ function getLogs (map) {
       message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least ${minCoordinatesCount})`
     })
   }
-  // TODO: kijk of coordinaten tussen de 90 en 180 zijn etc.!
+  // TODO: see if coordinates are between 90 and 180 etc.!
+  // TODO: find maps that cause postgis antipodal error, and log them
+  // TODO: find maps with perfect rectangular mask, log them (they don't seem to exist...)
+
+  if (map.mask && map.mask.coordinates.length !== 1) {
+    log.logs.push({
+      type: 'multipolygon',
+      message: 'Mask is MultiPolygon'
+    })
+  }
 
   if (map.maskError) {
     log.logs.push({
@@ -160,6 +171,7 @@ function transform (config, dirs, tools, callback) {
 
   H(stream)
     .filter((map) => map.bbox)
+    .filter((map) => map.map_type === 'is_map')
     .map((map) => {
       var pit = {
         id: map.id,
@@ -184,6 +196,8 @@ function transform (config, dirs, tools, callback) {
 
       if (geometry) {
         var intersection
+
+        // TODO: explain code below!
 
         var buffered = turf.buffer(
           {

@@ -16,13 +16,14 @@
   "author": "Bert Spaan",
   "license": "MIT",
   "dependencies": {
-    "JSONStream": "^1.0.7",
-    "highland": "^2.6.0",
+    "JSONStream": "^1.1.3",
+    "highland": "^3.0.0-beta.2",
     "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson",
-    "request": "^2.67.0",
-    "turf-area": "^1.1.1",
-    "turf-buffer": "^1.1.0",
-    "turf-intersect": "^1.4.2",
-    "wellknown": "^0.4.0"
+    "request": "^2.73.0",
+    "turf-area": "^3.0.12",
+    "turf-buffer": "^3.0.12",
+    "turf-envelope": "^3.0.12",
+    "turf-intersect": "^3.0.12",
+    "wellknown": "^0.4.2"
   }
 }
