@@ -1,3 +1,3 @@
-# Map Warper: Space/Time + Histograph
+# Map Warper - Space/Time ETL module
 
-Data!
+See https://github.com/nypl-spacetime/spacetime-etl

@@ -2,17 +2,12 @@ var fs = require('fs')
 var path = require('path')
 var request = require('request')
 var H = require('highland')
+var R = require('ramda')
 var JSONStream = require('JSONStream')
-var wellknown = require('wellknown')
 var turf = {
-  area: require('turf-area'),
-  buffer: require('turf-buffer'),
-  envelope: require('turf-envelope'),
-  intersect: require('turf-intersect')
+  area: require('turf-area')
 }
 var maskToGeoJSON = require('mask-to-geojson')
-
-const wholeWorld = require('./whole-world.json')
 
 var getUrl = function (perPage, page) {
   return `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
@@ -106,6 +101,8 @@ function download (config, dirs, tools, callback) {
     .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.json')))
 }
 
+const checkMap = (map) => Object.assign(map, {logs: getLogs(map)})
+
 function getLogs (map) {
   var log = {
     id: map.id,
@@ -123,9 +120,37 @@ function getLogs (map) {
       message: `Mask has ${map.mask.coordinates[0].length} coordinates (should have at least ${minCoordinatesCount})`
     })
   }
+
   // TODO: see if coordinates are between 90 and 180 etc.!
   // TODO: find maps that cause postgis antipodal error, and log them
-  // TODO: find maps with perfect rectangular mask, log them (they don't seem to exist...)
+
+  if (map.mask && map.mask.coordinates) {
+    const usaBbox = [
+      [
+        -139.5703125,
+        9.44906182688142
+      ],
+      [
+        -48.8671875,
+        52.26815737376817
+      ]
+    ]
+
+    const inUSA = (coor) => coor[0] > usaBbox[0][0] &&
+      coor[0] < usaBbox[1][0] &&
+      coor[1] > usaBbox[0][1] &&
+      coor[1] < usaBbox[1][1]
+
+    const allCoordinatesInUsa = R.all(R.identity, R.splitEvery(2, R.flatten(map.mask.coordinates))
+      .map(inUSA))
+
+    if (!allCoordinatesInUsa) {
+      log.logs.push({
+        type: 'outside_usa',
+        message: 'Mask has coordinates outside of USA'
+      })
+    }
+  }
 
   if (map.mask && map.mask.coordinates.length !== 1) {
     log.logs.push({
@@ -143,7 +168,7 @@ function getLogs (map) {
 
   if (mapStatus === 'warped' && maskStatus === 'unmasked') {
     log.logs.push({
-      type: 'mask_missing',
+      type: 'warped_but_unmasked',
       message: 'Map is warped, but not masked'
     })
   }
@@ -152,6 +177,13 @@ function getLogs (map) {
     log.logs.push({
       type: 'unwarped_but_masked',
       message: 'Map is masked, but not warped'
+    })
+  }
+
+  if (log.logs.length === 0 && !(map.mask && map.mask.coordinates)) {
+    log.logs.push({
+      type: 'mask_missing',
+      message: 'Map is unmasked'
     })
   }
 
@@ -172,75 +204,44 @@ function transform (config, dirs, tools, callback) {
   H(stream)
     .filter((map) => map.bbox)
     .filter((map) => map.map_type === 'is_map')
+    .map(checkMap)
+    .compact()
     .map((map) => {
-      var pit = {
-        id: map.id,
-        type: 'st:Map',
-        name: map.title,
-        data: {
-          description: map.description,
-          nyplDigitalId: map.nypl_digital_id,
-          uuid: map.uuid,
-          parentUuid: map.parent_uuid,
-          masked: map.mask_status === 'masked' || map.mask_status === 'masking',
-          nyplUrl: 'http://digitalcollections.nypl.org/items/' + map.uuid
-        }
-      }
+      if (map.logs) {
+        // Something's not right! Only write logs, do not write map!
+        return map.logs
+      } else {
+        const geometry = map.mask
+        const area = Math.round(turf.area(geometry))
 
-      var geometry
-      if (map.mask && map.mask.coordinates[0].length >= 4) {
-        geometry = map.mask
-      } else if (map.bbox_geom) {
-        geometry = wellknown(map.bbox_geom)
-      }
-
-      if (geometry) {
-        var intersection
-
-        // TODO: explain code below!
-
-        var buffered = turf.buffer(
-          {
-            type: 'Feature',
-            geometry: geometry
-          }
-          , 0.01, 'meters'
-        )
-
-        try {
-          intersection = turf.intersect(wholeWorld, buffered)
-        } catch (err) {
-          console.error(pit.id, err)
-          console.log(JSON.stringify(geometry))
-          intersection = undefined
+        var object = {
+          id: map.id,
+          type: 'st:Map',
+          name: map.title,
+          data: {
+            description: map.description,
+            nyplDigitalId: map.nypl_digital_id,
+            uuid: map.uuid,
+            parentUuid: map.parent_uuid,
+            masked: map.mask_status === 'masked' || map.mask_status === 'masking',
+            nyplUrl: 'http://digitalcollections.nypl.org/items/' + map.uuid,
+            area: area * 0.000001
+          },
+          geometry: geometry
         }
 
-        if (intersection) {
-          pit.geometry = intersection.geometry
+        if (map.depicts_year || map.issue_year) {
+          object.validSince = map.depicts_year || map.issue_year
+          object.validUntil = map.depicts_year || map.issue_year
+        }
 
-          // Compute map area in square kilometers
-          var area = Math.round(turf.area(intersection.geometry))
-          pit.data.area = area * 0.000001
+        return {
+          type: 'object',
+          obj: object
         }
       }
-
-      if (map.depicts_year || map.issue_year) {
-        pit.validSince = map.depicts_year || map.issue_year
-        pit.validUntil = map.depicts_year || map.issue_year
-      }
-
-      var logs = getLogs(map)
-
-      return [
-        logs,
-        {
-          type: 'pit',
-          obj: pit
-        }
-      ]
     })
     .flatten()
-    .compact()
     .map(H.curry(tools.writer.writeObject))
     .nfcall([])
     .series()

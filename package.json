@@ -1,10 +1,10 @@
 {
   "name": "spacetime-etl-mapwarper",
-  "version": "0.0.1",
-  "description": "Download and convert Mapwarper data to Histograph NDJSON",
+  "version": "1.0.0",
+  "description": "Download and convert NYPL Map Warper data to Space/Time NDJSON",
   "main": "mapwarper.js",
   "devDependencies": {
-    "standard": "^6.0.8"
+    "standard": "^8.4.0"
   },
   "repository": {
     "type": "git",
@@ -16,14 +16,11 @@
   "author": "Bert Spaan",
   "license": "MIT",
   "dependencies": {
-    "JSONStream": "^1.1.3",
+    "JSONStream": "^1.2.1",
     "highland": "^3.0.0-beta.2",
     "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson",
-    "request": "^2.73.0",
-    "turf-area": "^3.0.12",
-    "turf-buffer": "^3.0.12",
-    "turf-envelope": "^3.0.12",
-    "turf-intersect": "^3.0.12",
-    "wellknown": "^0.4.2"
+    "ramda": "^0.22.1",
+    "request": "^2.75.0",
+    "turf-area": "^3.0.12"
   }
 }
