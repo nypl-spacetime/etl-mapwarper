@@ -1,6 +1,6 @@
 # Space/Time ETL module: Mapwarper
 
-[ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) module for NYPL's [NYC Space/Time Direcory](http://spacetime.nypl.org/). This Node.js module downloads, parses, and/or transforms Mapwarper data to a NYC Space/Time Directory dataset.
+[ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) module for NYPL's [NYC Space/Time Direcory](http://spacetime.nypl.org/). This Node.js module downloads, parses, and/or transforms Mapwarper data, and creates a NYC Space/Time Directory dataset.
 
 ## Details
 
