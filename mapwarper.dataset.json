@@ -2,7 +2,7 @@
   "id": "mapwarper",
   "title": "Mapwarper",
   "license": "CC0",
-  "description": "",
+  "description": "Boundaries of thousands of maps from Map Warper, NYPL's tool for georectifying historical maps",
   "author": "NYPL",
   "website": "http://maps.nypl.org/",
   "editor": "Bert Spaan",

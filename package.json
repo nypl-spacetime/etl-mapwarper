@@ -4,7 +4,7 @@
   "description": "Download and convert NYPL Map Warper data to Space/Time NDJSON",
   "main": "mapwarper.js",
   "devDependencies": {
-    "spacetime-generate-etl-readme": "0.0.4",
+    "spacetime-generate-etl-readme": "^0.0.6",
     "standard": "^8.4.0"
   },
   "repository": {
