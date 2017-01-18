@@ -1,17 +1,17 @@
-var fs = require('fs')
-var path = require('path')
-var request = require('request')
-var H = require('highland')
-var R = require('ramda')
-var JSONStream = require('JSONStream')
-var turf = {
-  area: require('turf-area')
+const fs = require('fs')
+const path = require('path')
+const request = require('request')
+const H = require('highland')
+const R = require('ramda')
+const JSONStream = require('JSONStream')
+const turf = {
+  area: require('@turf/area'),
+  kinks: require('@turf/kinks'),
+  meta: require('@turf/meta')
 }
-var maskToGeoJSON = require('mask-to-geojson')
+const maskToGeoJSON = require('mask-to-geojson')
 
-var getUrl = function (perPage, page) {
-  return `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
-}
+const getUrl = (perPage, page) => `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
 
 var requestStream = function (url) {
   return H(request(url))
@@ -110,8 +110,10 @@ function getLogs (map) {
     logs: []
   }
 
-  var mapStatus = map.status
-  var maskStatus = map.mask_status
+  const mapStatus = map.status
+  const maskStatus = map.mask_status
+
+  // Check mask's number of coordinates:
 
   var minCoordinatesCount = 4
   if (map.mask && map.mask.coordinates[0].length < minCoordinatesCount) {
@@ -121,41 +123,42 @@ function getLogs (map) {
     })
   }
 
-  // TODO: see if coordinates are between 90 and 180 etc.!
-  // TODO: find maps that cause postgis antipodal error, and log them
-
-  if (map.mask && map.mask.coordinates) {
-    const usaBbox = [
-      [
-        -139.5703125,
-        9.44906182688142
-      ],
-      [
-        -48.8671875,
-        52.26815737376817
-      ]
-    ]
-
-    const inUSA = (coor) => coor[0] > usaBbox[0][0] &&
-      coor[0] < usaBbox[1][0] &&
-      coor[1] > usaBbox[0][1] &&
-      coor[1] < usaBbox[1][1]
-
-    const allCoordinatesInUsa = R.all(R.identity, R.splitEvery(2, R.flatten(map.mask.coordinates))
-      .map(inUSA))
-
-    if (!allCoordinatesInUsa) {
+  // Check if mask has self-intersections:
+  if (map.mask) {
+    const kinks = turf.kinks(map.mask)
+    if (kinks.features.length) {
       log.logs.push({
-        type: 'outside_usa',
-        message: 'Mask has coordinates outside of USA'
+        type: 'self_intersection',
+        message: `Mask has ${kinks.features.length} self-intersections`
       })
     }
   }
 
+  // Check if mask's coordinates are valid:
+  if (map.mask) {
+    const coordValid = (coord) => {
+      const lat = coord[1]
+      const lon = coord[0]
+
+      return lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90
+    }
+
+    const allValid = turf.meta.coordAll(map.mask)
+      .reduce((a, b) => a && coordValid(b), true)
+
+    if (!allValid) {
+     log.logs.push({
+        type: 'invalid_coordinates',
+        message: `Mask has invalid coordinates`
+      })
+    }
+  }
+
+  // Check if mask is a MultiPolygon:
   if (map.mask && map.mask.coordinates.length !== 1) {
     log.logs.push({
       type: 'multipolygon',
-      message: 'Mask is MultiPolygon'
+      message: `Mask is a MultiPolygon with ${map.mask.coordinates.length} polygons`
     })
   }
 
@@ -224,7 +227,7 @@ function transform (config, dirs, tools, callback) {
             uuid: map.uuid,
             parentUuid: map.parent_uuid,
             masked: map.mask_status === 'masked' || map.mask_status === 'masking',
-            nyplUrl: 'http://digitalcollections.nypl.org/items/' + map.uuid,
+            nyplUrl: `http://digitalcollections.nypl.org/items/${map.uuid}`,
             area: area * 0.000001
           },
           geometry: geometry
