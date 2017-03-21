@@ -6,7 +6,7 @@
   "author": "NYPL",
   "website": "http://maps.nypl.org/",
   "editor": "Bert Spaan",
-  "@context": {
+  "jsonldContext": {
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "dcterms": "http://purl.org/dc/terms/",
     "dc": "http://purl.org/dc/elements/1.1/",

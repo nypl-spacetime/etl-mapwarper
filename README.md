@@ -5,38 +5,38 @@
 ## Details
 
 <table>
-  <tbody>
+<tbody>
 
-    <tr>
-      <td>ID</td>
-      <td><code>mapwarper</code></td>
-    </tr>
+<tr>
+<td>ID</td>
+<td><code>mapwarper</code></td>
+</tr>
 
-    <tr>
-      <td>Title</td>
-      <td>Mapwarper</td>
-    </tr>
+<tr>
+<td>Title</td>
+<td>Mapwarper</td>
+</tr>
 
-    <tr>
-      <td>Description</td>
-      <td>Boundaries of thousands of maps from Map Warper, NYPL's tool for georectifying historical maps</td>
-    </tr>
+<tr>
+<td>Description</td>
+<td>Boundaries of thousands of maps from Map Warper, NYPL's tool for georectifying historical maps</td>
+</tr>
 
-    <tr>
-      <td>License</td>
-      <td>CC0</td>
-    </tr>
+<tr>
+<td>License</td>
+<td>CC0</td>
+</tr>
 
-    <tr>
-      <td>Author</td>
-      <td>NYPL</td>
-    </tr>
+<tr>
+<td>Author</td>
+<td>NYPL</td>
+</tr>
 
-    <tr>
-      <td>Website</td>
-      <td><a href="http://maps.nypl.org/">http://maps.nypl.org/</a></td>
-    </tr>
-  </tbody>
+<tr>
+<td>Website</td>
+<td><a href="http://maps.nypl.org/">http://maps.nypl.org/</a></td>
+</tr>
+</tbody>
 </table>
 
 ## Available steps
