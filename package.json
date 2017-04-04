@@ -1,10 +1,10 @@
 {
   "name": "spacetime-etl-mapwarper",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Download and convert NYPL Map Warper data to Space/Time NDJSON",
   "main": "mapwarper.js",
   "devDependencies": {
-    "spacetime-generate-etl-readme": "^0.1.1",
+    "spacetime-generate-etl-readme": "^0.1.5",
     "standard": "^8.4.0"
   },
   "repository": {
