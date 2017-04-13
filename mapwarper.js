@@ -3,7 +3,6 @@ const path = require('path')
 const request = require('request')
 const H = require('highland')
 const R = require('ramda')
-const JSONStream = require('JSONStream')
 const turf = {
   area: require('@turf/area'),
   kinks: require('@turf/kinks'),
@@ -82,23 +81,30 @@ function download (config, dirs, tools, callback) {
   const sleepMs = 2000
   const perPage = 250
 
-  return requestStream(getUrl(1, 1))
-    .map((body) => body.total_entries)
-    .map(H.curry(getUrls, perPage))
-    .flatten()
-    .map(H.curry(requestCallback, sleepMs))
-    .nfcall([])
-    .series()
-    .map((body) => body.items)
-    .flatten()
-    .compact()
-    .map(H.curry(getMask, sleepMs / 20))
-    .nfcall([])
-    .series()
-    .errors(callback)
-    .pipe(JSONStream.stringify())
-    .on('end', callback)
-    .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.json')))
+  maskToGeoJSON.gdalInstalled((err) => {
+    if (err) {
+      callback(new Error('GDAL is not installed - GDAL is needed to convert Map Warper masks to GeoJSON'))
+    } else {
+      requestStream(getUrl(1, 1))
+        .map((body) => body.total_entries)
+        .map(H.curry(getUrls, perPage))
+        .flatten()
+        .map(H.curry(requestCallback, sleepMs))
+        .nfcall([])
+        .series()
+        .map((body) => body.items)
+        .flatten()
+        .compact()
+        .map(H.curry(getMask, sleepMs / 20))
+        .nfcall([])
+        .series()
+        .errors(callback)
+        .map(JSON.stringify)
+        .intersperse('\n')
+        .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.ndjson')))
+        .on('finish', callback)
+    }
+  })
 }
 
 const checkMap = (map) => Object.assign(map, {logs: getLogs(map)})
@@ -114,7 +120,6 @@ function getLogs (map) {
   const maskStatus = map.mask_status
 
   // Check mask's number of coordinates:
-
   var minCoordinatesCount = 4
   if (map.mask && map.mask.coordinates[0].length < minCoordinatesCount) {
     log.logs.push({
@@ -201,10 +206,10 @@ function getLogs (map) {
 }
 
 function transform (config, dirs, tools, callback) {
-  var stream = fs.createReadStream(path.join(dirs.previous, 'maps.json'))
-    .pipe(JSONStream.parse('*'))
-
-  H(stream)
+  H(fs.createReadStream(path.join(dirs.previous, 'maps.ndjson')))
+    .split()
+    .compact()
+    .map(JSON.parse)
     .filter((map) => map.bbox)
     .filter((map) => map.map_type === 'is_map')
     .map(checkMap)
