@@ -1,8 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const request = require('request')
+const got = require('got')
 const H = require('highland')
-const R = require('ramda')
+// const R = require('ramda')
 const turf = {
   area: require('@turf/area'),
   kinks: require('@turf/kinks'),
@@ -10,37 +10,34 @@ const turf = {
 }
 const maskToGeoJSON = require('mask-to-geojson')
 
+const GOT_OPTIONS = {
+  timeout: 1000,
+  retries: 5,
+  json: true
+}
+
 const getUrl = (perPage, page) => `http://maps.nypl.org/warper/maps.json?per_page=${perPage}&page=${page}`
 
-var requestStream = function (url) {
-  return H(request(url))
-    .stopOnError(console.error)
-    .split()
-    .map(JSON.parse)
-}
-
-var requestCallback = function (sleep, url, callback) {
+function requestCallback (sleep, url, callback) {
   console.log('\tDownloading ' + url + ' (and sleeping ' + sleep + 'ms)')
 
-  request(url, function (err, response, body) {
-    if (err) {
-      callback(err)
-    } else {
+  got(url, GOT_OPTIONS)
+    .then((response) => {
       if (sleep) {
         setTimeout(() => {
-          callback(null, JSON.parse(body))
+          callback(null, response.body)
         }, sleep)
       } else {
-        callback(null, JSON.parse(body))
+        callback(null, response.body)
       }
-    }
-  })
+    })
+    .catch(callback)
 }
 
-var getUrls = function (perPage, items) {
-  var count = Math.ceil(items / perPage)
+function getUrls (perPage, items) {
+  const count = Math.ceil(items / perPage)
 
-  var urls = []
+  let urls = []
   for (var page = 1; page <= count; page++) {
     urls.push(getUrl(perPage, page))
   }
@@ -85,24 +82,27 @@ function download (config, dirs, tools, callback) {
     if (err) {
       callback(new Error('GDAL is not installed - GDAL is needed to convert Map Warper masks to GeoJSON'))
     } else {
-      requestStream(getUrl(1, 1))
-        .map((body) => body.total_entries)
-        .map(H.curry(getUrls, perPage))
-        .flatten()
-        .map(H.curry(requestCallback, sleepMs))
-        .nfcall([])
-        .series()
-        .map((body) => body.items)
-        .flatten()
-        .compact()
-        .map(H.curry(getMask, sleepMs / 20))
-        .nfcall([])
-        .series()
-        .errors(callback)
-        .map(JSON.stringify)
-        .intersperse('\n')
-        .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.ndjson')))
-        .on('finish', callback)
+      got(getUrl(1, 1), GOT_OPTIONS)
+        .then((response) => {
+          H([response.body.total_entries])
+            .map(H.curry(getUrls, perPage))
+            .flatten()
+            .map(H.curry(requestCallback, sleepMs))
+            .nfcall([])
+            .series()
+            .map((body) => body.items)
+            .flatten()
+            .compact()
+            .map(H.curry(getMask, sleepMs / 20))
+            .nfcall([])
+            .series()
+            .errors(callback)
+            .map(JSON.stringify)
+            .intersperse('\n')
+            .pipe(fs.createWriteStream(path.join(dirs.current, 'maps.ndjson')))
+            .on('finish', callback)
+        })
+        .catch(callback)
     }
   })
 }
@@ -152,7 +152,7 @@ function getLogs (map) {
       .reduce((a, b) => a && coordValid(b), true)
 
     if (!allValid) {
-     log.logs.push({
+      log.logs.push({
         type: 'invalid_coordinates',
         message: `Mask has invalid coordinates`
       })
@@ -206,6 +206,8 @@ function getLogs (map) {
 }
 
 function transform (config, dirs, tools, callback) {
+  callback()
+
   H(fs.createReadStream(path.join(dirs.previous, 'maps.ndjson')))
     .split()
     .compact()

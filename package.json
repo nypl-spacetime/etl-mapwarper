@@ -1,6 +1,6 @@
 {
   "name": "spacetime-etl-mapwarper",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Download and convert NYPL Map Warper data to Space/Time NDJSON",
   "main": "mapwarper.js",
   "devDependencies": {
@@ -21,9 +21,8 @@
     "@turf/area": "^3.6.3",
     "@turf/kinks": "^3.7.0",
     "@turf/meta": "^3.7.0",
-    "highland": "^2.10.1",
-    "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson",
-    "ramda": "^0.22.1",
-    "request": "^2.79.0"
+    "got": "^6.7.1",
+    "highland": "^2.10.5",
+    "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson"
   }
 }
