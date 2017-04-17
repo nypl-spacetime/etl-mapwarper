@@ -11,7 +11,7 @@ const turf = {
 const maskToGeoJSON = require('mask-to-geojson')
 
 const GOT_OPTIONS = {
-  timeout: 1000,
+  timeout: 25 * 1000,
   retries: 5,
   json: true
 }
@@ -49,6 +49,7 @@ function getMask (sleep, map, callback) {
   var maskStatus = map.mask_status
   if (maskStatus === 'masked' || maskStatus === 'masking') {
     console.log(`          Getting mask for map ${map.id}`)
+
     maskToGeoJSON.getMaskAndTransform({
       mapId: map.id,
       transform: map.transform_options
