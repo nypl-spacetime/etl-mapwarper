@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 const got = require('got')
 const H = require('highland')
-// const R = require('ramda')
 const turf = {
   area: require('@turf/area'),
   kinks: require('@turf/kinks'),
@@ -207,8 +206,6 @@ function getLogs (map) {
 }
 
 function transform (config, dirs, tools, callback) {
-  callback()
-
   H(fs.createReadStream(path.join(dirs.previous, 'maps.ndjson')))
     .split()
     .compact()
