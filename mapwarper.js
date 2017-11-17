@@ -213,6 +213,14 @@ function getLogs (map) {
     logs: []
   }
 
+  // Check if mask is a MultiPolygon:
+  if (!map.uuid) {
+    log.logs.push({
+      type: 'missing_uuid',
+      message: `Map has no UUID`
+    })
+  }
+
   const mapStatus = map.status
   const maskStatus = map.mask_status
 
@@ -321,6 +329,11 @@ function getLayerRelations (map) {
   }))
 }
 
+function roundDecimals (number, decimals) {
+  const n = Math.pow(10, decimals)
+  return Math.round(number * n) /n
+}
+
 function transformMap (map) {
   if (!map.bbox || map.map_type !== 'is_map') {
     return
@@ -334,15 +347,7 @@ function transformMap (map) {
     const geometry = map.maskGeometry
     const area = Math.round(turf.area(geometry))
 
-    // console.log(map.id)
-    if (String(map.uuid).startsWith('inset')) {
-      console.log('INSET INSET INSET INSET INSET INSET INSET INSET INSET ')
-      console.log(map)
-
-      // http://api.repo.nypl.org/api/v1/items/local_image_id/2001548
-    }
-
-    // console.log(map.id, map.id.startsWith('inset'))
+    const inset = String(map.uuid).startsWith('inset')
 
     const object = {
       type: 'object',
@@ -357,10 +362,11 @@ function transformMap (map) {
           imageId: map.nypl_digital_id,
           uuid: map.uuid,
           parentUuid: map.parent_uuid,
+          inset,
           masked: map.mask_status === 'masked' || map.mask_status === 'masking',
           nyplUrl: `http://digitalcollections.nypl.org/items/${map.uuid}`,
           tileUrl: `http://maps.nypl.org/warper/maps/tile/${map.id}/{z}/{x}/{y}.png`,
-          area: area * 0.000001,
+          area: roundDecimals(area * 0.000001, 5),
           gcps: map.gcps
         },
         geometry
@@ -386,7 +392,7 @@ function transformLayer (layer) {
       data: {
         mapCount: layer.maps_count,
         tileUrl: `http://maps.nypl.org/warper/layers/tile/${layer.id}/{z}/{x}/{y}.png`,
-        bbox: layer.bbox && layer.bbox.split(',').map(parseFloat)
+        bbox: layer.bbox ? layer.bbox.split(',').map(parseFloat) : undefined
       }
     }
   }

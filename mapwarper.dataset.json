@@ -3,38 +3,134 @@
   "title": "Mapwarper",
   "license": "CC0",
   "description": "Boundaries of thousands of maps from Map Warper, NYPL's tool for georectifying historical maps",
-  "author": "NYPL",
-  "website": "http://maps.nypl.org/",
-  "editor": "Bert Spaan",
-  "jsonldContext": {
-    "xsd": "http://www.w3.org/2001/XMLSchema#",
-    "dcterms": "http://purl.org/dc/terms/",
-    "dc": "http://purl.org/dc/elements/1.1/",
-    "description": {
-      "@id": "dc:description",
-      "@type": "xsd:string"
+  "homepage": "http://maps.nypl.org/warper",
+  "sources": [
+    {
+      "title": "Map Warper maps",
+      "path": "http://maps.nypl.org/warper/maps.json"
     },
-    "nyplDigitalId": {
-      "@id": "dcterms:identifier",
-      "@type": "xsd:string"
-    },
-    "uuid": {
-      "@id": "dcterms:identifier",
-      "@type": "xsd:string"
-    },
-    "parentUuid": {
-      "@id": "dcterms:identifier",
-      "@type": "xsd:string"
-    },
-    "nyplUrl": {
-      "@id": "dcterms:identifier",
-      "@type": "xsd:string"
-    },
-    "masked": {
-      "@type": "xsd:boolean"
-    },
-    "area": {
-      "@type": "xsd:double"
+    {
+      "title": "Map Warper layers",
+      "path": "http://maps.nypl.org/warper/layers.json"
     }
+  ],
+  "contributors": [
+    {
+      "title": "Bert Spaan",
+      "role": "editor"
+    }
+  ],
+  "fields": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "oneOf": [
+      {
+        "type": "object",
+        "description": "Map Warper layer",
+        "additionalProperties": false,
+        "required": [
+          "mapCount",
+          "tileUrl"
+        ],
+        "properties": {
+          "mapCount": {
+            "type": "integer",
+            "description": "Amount of maps in layer"
+          },
+          "bbox": {
+            "type": "aray",
+            "description": "Latitude/longitude points of bounding box of layer",
+            "items": {
+              "type": "number",
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "tileUrl": {
+            "type": "string",
+            "description": "Map tile URL of layer"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "description": "Map Warper map",
+        "additionalProperties": false,
+        "required": [
+          "uuid",
+          "description",
+          "imageId",
+          "masked",
+          "nyplUrl",
+          "tileUrl",
+          "area",
+          "gcps"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "description": "NYPL UUID of map"
+          },
+          "inset": {
+            "type": "boolean",
+            "description": "Whether map is an inset map (i.e. has a parent map containing multiple maps)"
+          },
+          "parentUuid": {
+            "type": "string",
+            "description": "UUID of parent - applicable if map is an inset"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of map"
+          },
+          "imageId": {
+            "type": "string",
+            "description": "NYPL image ID"
+          },
+          "masked": {
+            "type": "boolean",
+            "description": "Whether map is cropped/masked (i.e. non-cartographic parts cut away)"
+          },
+          "nyplUrl": {
+            "type": "string",
+            "description": "NYPL Digital Collections URL"
+          },
+          "tileUrl": {
+            "type": "string",
+            "description": "Map tile URL of map"
+          },
+          "area": {
+            "type": "number",
+            "description": "Area depicted by map in square kilometers"
+          },
+          "gcps": {
+            "type": "array",
+            "description": "Ground Control Points (GCPs) for",
+            "minItems": 3,
+            "items": {
+              "additionalItems": false,
+              "type": "array",
+              "items": [
+                {
+                  "type": "number",
+                  "description": "X coordinate of control point (in pixels) on original scanned map"
+                },
+                {
+                  "type": "number",
+                  "description": "Y coordinate of control point (in pixels) on original scanned map"
+                },
+                {
+                  "type": "number",
+                  "description": "Latitude of control point"
+                },
+                {
+                  "type": "number",
+                  "description": "Longitude of control point"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
   }
 }
