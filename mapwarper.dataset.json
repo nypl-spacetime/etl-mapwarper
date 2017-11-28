@@ -16,11 +16,15 @@
   ],
   "contributors": [
     {
+      "title": "Map Warper contributors",
+      "role": "author"
+    },
+    {
       "title": "Bert Spaan",
-      "role": "editor"
+      "role": "wrangler"
     }
   ],
-  "fields": {
+  "schema": {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "oneOf": [
       {
