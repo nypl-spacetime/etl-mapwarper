@@ -171,6 +171,16 @@ function download (config, dirs, tools, callback) {
         if (err) {
           callback(new Error('GDAL is not installed - GDAL is needed to convert Map Warper masks to GeoJSON'))
         } else {
+          let mapLayers = H.pipeline()
+
+          if (config && config.includeMapLayers) {
+            mapLayers = H.pipeline(
+              H.map(H.curry(getMapLayers)),
+              H.nfcall([]),
+              H.series()
+            )
+          }
+
           downloadUrl(getMapsUrl())
             .then((body) => {
               H([body.total_entries])
@@ -182,9 +192,7 @@ function download (config, dirs, tools, callback) {
                 .map((body) => body.items)
                 .flatten()
                 .compact()
-                .map(H.curry(getMapLayers))
-                .nfcall([])
-                .series()
+                .pipe(mapLayers)
                 .errors(callback)
                 .map(H.curry(getMask, SLEEP_MS / 20))
                 .nfcall([])
