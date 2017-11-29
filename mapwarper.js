@@ -327,6 +327,10 @@ function getYear (object) {
 const getLayerId = (layerId) => `layer-${layerId}`
 
 function getLayerRelations (map) {
+  if (!map.layerIds) {
+    return
+  }
+
   return map.layerIds.map((layerId) => ({
     type: 'relation',
     obj: {
