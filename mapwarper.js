@@ -328,7 +328,7 @@ const getLayerId = (layerId) => `layer-${layerId}`
 
 function getLayerRelations (map) {
   if (!map.layerIds) {
-    return
+    return []
   }
 
   return map.layerIds.map((layerId) => ({
