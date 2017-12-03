@@ -42,9 +42,7 @@ function downloadUrl (url, sleep) {
 
 function downloadUrlCallback (sleep, url, callback) {
   downloadUrl(url, sleep)
-    .then((body) => {
-      callback(null, body)
-    })
+    .then((body) => callback(null, body))
     .catch(callback)
 }
 
@@ -177,18 +175,24 @@ function download (config, dirs, tools, callback) {
             mapLayers = H.pipeline(
               H.map(H.curry(getMapLayers)),
               H.nfcall([]),
-              H.series()
+              H.series(),
+              H.stopOnError(callback)
             )
           }
 
           downloadUrl(getMapsUrl())
             .then((body) => {
+              if (!body || !body.total_entries) {
+                throw new Error('Error in body.total_entries')
+              }
+
               H([body.total_entries])
                 .map(H.curry(getMapsUrls))
                 .flatten()
                 .map(H.curry(downloadUrlCallback, SLEEP_MS))
                 .nfcall([])
                 .series()
+                .stopOnError(callback)
                 .map((body) => body.items)
                 .flatten()
                 .compact()
