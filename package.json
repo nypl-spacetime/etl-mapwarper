@@ -21,7 +21,7 @@
     "@turf/area": "^3.6.3",
     "@turf/kinks": "^3.7.0",
     "@turf/meta": "^3.7.0",
-    "got": "^6.7.1",
+    "got": "^8.0.1",
     "highland": "^2.10.5",
     "mask-to-geojson": "github:nypl-spacetime/mask-to-geojson"
   }
