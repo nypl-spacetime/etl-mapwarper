@@ -1,11 +1,6 @@
 # NYC Space/Time Directory ETL module: Mapwarper
 
-[ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) module for NYPL’s [NYC Space/Time Direcory](http://spacetime.nypl.org/). This Node.js module downloads, parses, and/or transforms Mapwarper data, and creates a NYC Space/Time Directory dataset.
-
-
-## Data
-
-The dataset created by this ETL module’s `transform` step can be found in the [data section of the NYC Space/Time Directory website](http://spacetime.nypl.org/#data-mapwarper).
+[ETL](https://en.wikipedia.org/wiki/Extract,_transform,_load) module for NYPL's [NYC Space/Time Direcory](http://spacetime.nypl.org/). This Node.js module downloads, parses, and/or transforms Mapwarper data, and creates a NYC Space/Time Directory dataset.
 
 ## Details
 
@@ -31,141 +26,8 @@ The dataset created by this ETL module’s `transform` step can be found in the 
 <td>License</td>
 <td>CC0</td>
 </tr>
-
-<tr>
-<td>Contributors</td>
-<td><ul><li>Map Warper contributors (author)</li><li>Bert Spaan (wrangler)</li></ul></td>
-</tr>
-
-<tr>
-<td>Sources</td>
-<td><ul><li><a href="http://maps.nypl.org/warper/maps.json">Map Warper maps</a></li><li><a href="http://maps.nypl.org/warper/layers.json">Map Warper layers</a></li></ul></td>
-</tr>
-
-<tr>
-<td>Homepage</td>
-<td><a href="http://maps.nypl.org/warper">http://maps.nypl.org/warper</a></td>
-</tr>
 </tbody>
 </table>
-
-[JSON Schema](http://json-schema.org/) of Object data:
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "oneOf": [
-    {
-      "type": "object",
-      "description": "Map Warper layer",
-      "additionalProperties": false,
-      "required": [
-        "mapCount",
-        "tileUrl"
-      ],
-      "properties": {
-        "mapCount": {
-          "type": "integer",
-          "description": "Amount of maps in layer"
-        },
-        "bbox": {
-          "type": "aray",
-          "description": "Latitude/longitude points of bounding box of layer",
-          "items": {
-            "type": "number",
-            "minItems": 4,
-            "maxItems": 4
-          }
-        },
-        "tileUrl": {
-          "type": "string",
-          "description": "Map tile URL of layer"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "description": "Map Warper map",
-      "additionalProperties": false,
-      "required": [
-        "uuid",
-        "description",
-        "imageId",
-        "masked",
-        "nyplUrl",
-        "tileUrl",
-        "area",
-        "gcps"
-      ],
-      "properties": {
-        "uuid": {
-          "type": "string",
-          "description": "NYPL UUID of map"
-        },
-        "inset": {
-          "type": "boolean",
-          "description": "Whether map is an inset map (i.e. has a parent map containing multiple maps)"
-        },
-        "parentUuid": {
-          "type": "string",
-          "description": "UUID of parent - applicable if map is an inset"
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of map"
-        },
-        "imageId": {
-          "type": "string",
-          "description": "NYPL image ID"
-        },
-        "masked": {
-          "type": "boolean",
-          "description": "Whether map is cropped/masked (i.e. non-cartographic parts cut away)"
-        },
-        "nyplUrl": {
-          "type": "string",
-          "description": "NYPL Digital Collections URL"
-        },
-        "tileUrl": {
-          "type": "string",
-          "description": "Map tile URL of map"
-        },
-        "area": {
-          "type": "number",
-          "description": "Area depicted by map in square kilometers"
-        },
-        "gcps": {
-          "type": "array",
-          "description": "Ground Control Points (GCPs) for",
-          "minItems": 3,
-          "items": {
-            "additionalItems": false,
-            "type": "array",
-            "items": [
-              {
-                "type": "number",
-                "description": "X coordinate of control point (in pixels) on original scanned map"
-              },
-              {
-                "type": "number",
-                "description": "Y coordinate of control point (in pixels) on original scanned map"
-              },
-              {
-                "type": "number",
-                "description": "Latitude of control point"
-              },
-              {
-                "type": "number",
-                "description": "Longitude of control point"
-              }
-            ]
-          }
-        }
-      }
-    }
-  ]
-}
-```
 
 ## Available steps
 
@@ -179,9 +41,14 @@ git clone https://github.com/nypl-spacetime/etl-mapwarper.git /path/to/etl-modul
 cd /path/to/etl-modules/etl-mapwarper
 npm install
 
-spacetime-etl mapwarper[.<step>]
+spacetime-etl mapwarper [<step>]
 ```
 
 See http://github.com/nypl-spacetime/spacetime-etl for information about Space/Time's ETL tool. More Space/Time ETL modules [can be found on GitHub](https://github.com/search?utf8=%E2%9C%93&q=org%3Anypl-spacetime+etl-&type=Repositories&ref=advsearch&l=&l=).
+
+# Data
+
+The dataset created by this ETL module's `transform` step can be found in the [data section of the NYC Space/Time Directory website](http://spacetime.nypl.org/#data-mapwarper).
+
 
 _This README file is generated by [generate-etl-readme](https://github.com/nypl-spacetime/generate-etl-readme)._

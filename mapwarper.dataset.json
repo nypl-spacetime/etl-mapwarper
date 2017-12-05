@@ -24,6 +24,20 @@
       "role": "wrangler"
     }
   ],
+  "flattenPaths": [
+    "$.data.uuid",
+    "$.data.inset",
+    "$.data.parentUuid",
+    "$.data.description",
+    "$.data.imageId",
+    "$.data.masked",
+    "$.data.nyplUrl",
+    "$.data.tileUrl",
+    "$.data.area",
+    "$.data.gcps",
+    "$.data.mapCount",
+    "$.data.bbox"
+  ],
   "schema": {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "oneOf": [
